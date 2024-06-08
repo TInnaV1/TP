@@ -1,20 +1,25 @@
 #!/bin/bash
 
+if [ "$#" -ne 2 ]; then
+    echo "Usage: $0 <input_dir> <output_dir>"
+    exit 1
+fi
+
 input_dir="$1"
 output_dir="$2"
-count=1
 
-if [[ "$(ls -A "$input_dir")" ]]; then
-    for file in "$input_dir"/*; do
-        if [[ -d "$file" && "$(ls -A "$file")" ]]; then
-            chmod +xr "$file"/*
-        fi
-    done
+declare -A file_map
 
-    find "$input_dir" -type f | while read -r file; do
-        name=$(basename "$file")
-        new_name="${count}_${name}"
-        cp "$file" "$output_dir/$new_name"
-        count=$((count + 1))
-    done
-fi 
+while IFS= read -r -d '' file; do
+    name=$(basename "$file")
+    
+    if [[ -e "$output_dir/$name" ]]; then
+        ((file_map["$name"]++))
+        new_name="${name%.*}_${file_map["$name"]}.${name##*.}"
+    else
+        new_name="$name"
+        file_map["$name"]=1
+    fi
+    
+    cp -p "$file" "$output_dir/$new_name"
+done < <(find "$input_dir" -type f -print0)
