@@ -8,18 +8,17 @@ fi
 input_dir="$1"
 output_dir="$2"
 
-declare -A file_map
-
-while IFS= read -r -d '' file; do
+find "$input_dir" -type f -print0 | while IFS= read -r -d '' file; do
     name=$(basename "$file")
-    
-    if [[ -e "$output_dir/$name" ]]; then
-        ((file_map["$name"]++))
-        new_name="${name%.*}_${file_map["$name"]}.${name##*.}"
-    else
-        new_name="$name"
-        file_map["$name"]=1
-    fi
-    
+    new_name="$name"
+    counter=1
+    while [ -e "$output_dir/$new_name" ]; do
+        base="${name%.*}"
+        ext="${name##*.}"
+        new_name="${base}_${counter}.${ext}"
+        ((counter++))
+    done
     cp -p "$file" "$output_dir/$new_name"
-done < <(find "$input_dir" -type f -print0)
+done
+
+
