@@ -8,17 +8,29 @@ fi
 input_dir="$1"
 output_dir="$2"
 
-find "$input_dir" -type f -print0 | while IFS= read -r -d '' file; do
-    name=$(basename "$file")
-    new_name="$name"
+chmod -R +xr "$input_dir"
+
+shopt -s dotglob
+
+find "$input_dir" -type f | while read file; do
+    file_name=$(basename -- "$file")
+    end_file_path="$output_dir/$file_name"
     counter=1
-    while [ -e "$output_dir/$new_name" ]; do
-        base="${name%.*}"
-        ext="${name##*.}"
-        new_name="${base}_${counter}.${ext}"
+
+    while [ -e "$end_file_path" ]; do
+        name="${file_name%.*}"
+        extension="${file_name##*.}"
+        if [[ "$file_name" == *.* ]]; then
+            end_file_path="$output_dir/${name}_$counter.$extension"
+        else
+            end_file_path="$output_dir/${name}_$counter"
+        fi
         ((counter++))
     done
-    cp -p "$file" "$output_dir/$new_name"
+
+    cp "$file" "$end_file_path"
+
 done
+
 
 
